@@ -16,6 +16,7 @@ mod generic;
 pub mod ios;
 pub mod linux;
 pub mod macos;
+mod wasm32_wasip1_threads;
 mod windows;
 
 pub fn uses_freetype(config: &BuildConfiguration) -> bool {
@@ -77,6 +78,7 @@ fn details(target: &Target) -> &dyn PlatformDetails {
         (_, _, "windows", _) => &windows::Generic,
         (_, "unknown", "linux", Some("musl")) => &alpine::Musl,
         (_, _, "linux", _) => &linux::Linux,
+        ("wasm32", "wasip1", "threads", _) => &wasm32_wasip1_threads::Wasm32Wasip1Threads,
         _ => &generic::Generic,
     }
 }
