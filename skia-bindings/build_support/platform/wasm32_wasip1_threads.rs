@@ -67,7 +67,8 @@ fn cflags() -> Vec<String> {
     format!(
         "
     -DSK_BUILD_FOR_UNIX
-    -D__EMSCRIPTEN__
+    -D__wasm32__
+    -D_WASI_EMULATED_GETPID
 
     -mllvm
     -wasm-enable-sjlj
