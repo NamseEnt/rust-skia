@@ -29,68 +29,65 @@ impl PlatformDetails for Wasm32Wasip1Threads {
             // See https://github.com/rust-skia/rust-skia/issues/648
             .arg("skia_enable_fontmgr_custom_embedded", no())
             .arg("skia_enable_fontmgr_custom_empty", yes())
-            .cflags(cflags());
+            .cflags(flags());
     }
 
     fn bindgen_args(&self, _target: &Target, builder: &mut BindgenArgsBuilder) {
-        builder.args(cflags());
+        builder.args(flags());
     }
 
     fn link_libraries(&self, _features: &Features) -> Vec<String> {
-        vec![
-            format!("c++"),
-            format!("c++abi"),
-            format!("c++experimental"),
-            format!("c-printscan-long-double"),
-            format!("c-printscan-no-floating-point"),
-            format!("c"),
-            format!("crypt"),
-            format!("dl"),
-            format!("m"),
-            format!("pthread"),
-            format!("resolv"),
-            format!("rt"),
-            format!("setjmp"),
-            format!("util"),
-            format!("wasi-emulated-getpid"),
-            format!("wasi-emulated-mman"),
-            format!("wasi-emulated-process-clocks"),
-            format!("wasi-emulated-signal"),
-            format!("xnet"),
-            // /opt/wasi-sdk/lib/clang/18/lib/wasip1/libclang_rt.builtins-wasm32.a
-            format!("clang_rt.builtins-wasm32"),
+        [
+            "c++",
+            "c++abi",
+            "c++experimental",
+            "c-printscan-long-double",
+            "c-printscan-no-floating-point",
+            "c",
+            "crypt",
+            "dl",
+            "m",
+            "pthread",
+            "resolv",
+            "rt",
+            "setjmp",
+            "util",
+            "wasi-emulated-getpid",
+            "wasi-emulated-mman",
+            "wasi-emulated-process-clocks",
+            "wasi-emulated-signal",
+            "xnet",
+            "clang_rt.builtins-wasm32",
         ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
     }
 }
 
-fn cflags() -> Vec<String> {
-    format!(
-        "
-    -DSK_BUILD_FOR_UNIX
-    -D__wasm32__
-    -D_WASI_EMULATED_GETPID
-
-    -mllvm
-    -wasm-enable-sjlj
-    -mtail-call
-    -D_WASI_EMULATED_MMAN
-    -pthread
-
-    -fvisibility=default
-
-    -Xclang -target-feature -Xclang +atomics
-    -Xclang -target-feature -Xclang +bulk-memory
-    -Xclang -target-feature -Xclang +mutable-globals
-
-    --sysroot=/{wasi_sdk_base_dir}/share/wasi-sysroot
-    -I/{wasi_sdk_base_dir}/lib/clang/18/include
-    -I{emsdk_system_include}
-",
-        emsdk_system_include = emsdk_system_include(),
-        wasi_sdk_base_dir = wasi_sdk_base_dir(),
-    )
-    .split_whitespace()
-    .map(|s| s.to_string())
+fn flags() -> Vec<String> {
+    let wasi_sdk_base_dir = wasi_sdk_base_dir();
+    let emsdk_system_include = emsdk_system_include();
+    [
+        "-DSK_BUILD_FOR_UNIX",
+        "-D__wasm32__",
+        "-D__EMSCRIPTEN__",
+        "-D_WASI_EMULATED_GETPID",
+        "-mllvm",
+        "-wasm-enable-sjlj",
+        "-mtail-call",
+        "-D_WASI_EMULATED_MMAN",
+        "-pthread",
+        "-fvisibility=default",
+        "-Xclang -target-feature -Xclang +atomics",
+        "-Xclang -target-feature -Xclang +bulk-memory",
+        "-Xclang -target-feature -Xclang +mutable-globals",
+        &format!("--sysroot=/{wasi_sdk_base_dir}/share/wasi-sysroot"),
+        &format!("-I/{wasi_sdk_base_dir}/lib/clang/18/include"),
+        &format!("-I{emsdk_system_include}"),
+    ]
+    .iter()
+    .flat_map(|s| s.split_whitespace().map(|s| s.to_string()))
     .collect()
 }
 
