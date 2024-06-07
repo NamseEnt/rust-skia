@@ -1,0 +1,76 @@
+name: 'wasi-release'
+on:
+  push:
+    branches:
+      - release
+
+concurrency:
+  group: 'linux-release-${{ github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  linux-release-release-gl:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Fix git dubious ownership errors when synchronizing Skia dependencies
+      run: git config --global --add safe.directory '*'
+
+    - name: Set up rust
+      run: |
+        rustup update
+        rustup target add wasm32-wasip1-threads
+
+    - name: Set up wasi-sdk
+      run: |
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-22/wasi-sdk-22.0-linux.tar.gz
+        tar -xvf wasi-sdk-22.0-linux.tar.gz -C /tmp
+        echo "WASI_SDK=/tmp/wasi-sdk-22.0" >> ${GITHUB_ENV}
+
+    - name: Set up emscripten
+      run: |
+          git clone --filter=blob:none --no-checkout https://github.com/emscripten-core/emscripten /tmp/emscripten
+          cd /tmp/emscripten
+          git checkout 3.1.61
+          git sparse-checkout set system/include
+          echo "EMSDK_SYSTEM_INCLUDE=/tmp/emscripten" >> ${GITHUB_ENV}
+
+    - name: 'Build skia-safe for wasm32-wasip1-threads with features gl,freetype-woff2,embed-freetype'
+      shell: bash
+      run: |
+        cargo clean
+        cargo build -p skia-safe --release --features "gl,freetype-woff2,embed-freetype" --target wasm32-wasip1-threads
+        echo "SKIA_BINARIES_TAG=$(cat "${BUILD_ARTIFACTSTAGINGDIRECTORY}/skia-binaries/tag.txt")" >> ${GITHUB_ENV}
+        echo "SKIA_BINARIES_KEY=$(cat "${BUILD_ARTIFACTSTAGINGDIRECTORY}/skia-binaries/key.txt")" >> ${GITHUB_ENV}
+        echo "SKIA_STAGING_PATH=${BUILD_ARTIFACTSTAGINGDIRECTORY}" >> ${GITHUB_ENV}
+      env:
+        BUILD_ARTIFACTSTAGINGDIRECTORY: ${{ runner.temp }}
+        EMCC_CFLAGS: "-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s MAX_WEBGL_VERSION=2"
+
+    - name: 'Compress binaries'
+      if: true
+      uses: a7ul/tar-action@v1.1.2
+      with:
+        command: c
+        cwd: '${{ env.SKIA_STAGING_PATH }}'
+        files: 'skia-binaries'
+        outPath: '${{ runner.temp }}/skia-binaries-${{ env.SKIA_BINARIES_KEY }}.tar.gz'
+
+    - name: 'Release binaries'
+      if: true
+      uses: pragmatrix/release-action@v1.11.1-rs
+      with:
+        owner: rust-skia
+        repo: skia-binaries
+        allowUpdates: true
+        replacesArtifacts: true
+        tag: '${{ env.SKIA_BINARIES_TAG }}'
+        artifacts: '${{ runner.temp }}/skia-binaries-${{ env.SKIA_BINARIES_KEY }}.tar.gz'
+        artifactErrorsFailBuild: true
+        token: ${{ secrets.RUST_SKIA_RELEASE_TOKEN }}
+        prerelease: true
+    
