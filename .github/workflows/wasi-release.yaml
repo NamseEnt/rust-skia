@@ -56,7 +56,7 @@ jobs:
         CC: /tmp/wasi-sdk-22.0/bin/clang
         CXX: /tmp/wasi-sdk-22.0/bin/clang++
         CLANG_PATH: /tmp/wasi-sdk-22.0/bin/clang
-        CARGO_TARGET_WASM32_WASIP1_THREADS_LINKER: /tmp/wasi-sdk-22.0/bin/wasm-l
+        CARGO_TARGET_WASM32_WASIP1_THREADS_LINKER: /tmp/wasi-sdk-22.0/bin/wasm-ld
 
     - name: 'Compress binaries'
       if: true
