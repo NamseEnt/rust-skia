@@ -192,7 +192,7 @@ fn should_try_download_binaries(
     if cargo::target().as_strs() == ("x86_64", "pc", "windows", Some("msvc")) {
         return Some((
             "0.74.0".to_string(),
-            "7274f6294ec580961a6b-x86_64-pc-windows-msvc-d3d-freetype".to_string(),
+            "160d230baf8d8bdbd207-x86_64-pc-windows-msvc-d3d-freetype".to_string(),
         ));
     }
 

@@ -21,7 +21,6 @@ impl PlatformDetails for Wasm32Wasip1Threads {
             .arg("ar", quote(&format!("{}/bin/llvm-ar", wasi_sdk_base_dir())))
             .arg("skia_gl_standard", quote("webgl"))
             .arg("skia_use_webgl", yes_if(features.gpu()))
-            .arg("skia_use_freetype_woff2", yes())
             .arg("target_cpu", quote("wasm"))
             // The custom embedded font manager is enabled by default on WASM, but depends
             // on the undefined symbol `SK_EMBEDDED_FONTS`. Enable the custom empty font

@@ -6,10 +6,12 @@ pub struct Msvc;
 
 impl PlatformDetails for Msvc {
     fn uses_freetype(&self, _config: &BuildConfiguration) -> bool {
-        false
+        true
     }
 
     fn gn_args(&self, config: &BuildConfiguration, builder: &mut GnArgsBuilder) {
+        builder.arg("skia_enable_fontmgr_win", no());
+        builder.arg("skia_enable_fontmgr_win_gdi", no());
         if let Some(win_vc) = resolve_vc() {
             builder.arg(
                 "win_vc",
