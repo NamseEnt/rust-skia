@@ -22,10 +22,6 @@ impl PlatformDetails for Wasm32Wasip1Threads {
             .arg("skia_gl_standard", quote("webgl"))
             .arg("skia_use_webgl", yes_if(features.gpu()))
             .arg("target_cpu", quote("wasm"))
-            // The custom embedded font manager is enabled by default on WASM, but depends
-            // on the undefined symbol `SK_EMBEDDED_FONTS`. Enable the custom empty font
-            // manager instead so typeface creation still works.
-            // See https://github.com/rust-skia/rust-skia/issues/648
             .arg("skia_enable_fontmgr_custom_embedded", no())
             .arg("skia_enable_fontmgr_custom_empty", yes())
             .cflags(flags());
