@@ -156,7 +156,8 @@ impl binaries_config::BinariesConfiguration {
 /// Returns whether the prepared download needs to be built.
 pub fn try_prepare_download(binaries_config: &binaries_config::BinariesConfiguration) -> bool {
     env::force_skia_build() || {
-        let force_download = env::force_skia_binaries_download();
+        let force_download = env::force_skia_binaries_download()
+            || cargo::target().as_strs() == ("x86_64", "pc", "windows", Some("msvc"));
         if let Some((tag, key)) = should_try_download_binaries(binaries_config, force_download) {
             println!("TRYING TO DOWNLOAD AND INSTALL SKIA BINARIES: {tag}/{key}");
             let url = binaries::download_url(
@@ -187,6 +188,13 @@ fn should_try_download_binaries(
     force: bool,
 ) -> Option<(String, String)> {
     let tag = cargo::package_version();
+
+    if cargo::target().as_strs() == ("x86_64", "pc", "windows", Some("msvc")) {
+        return Some((
+            "0.74.0".to_string(),
+            "7274f6294ec580961a6b-x86_64-pc-windows-msvc-d3d-freetype".to_string(),
+        ));
+    }
 
     // For testing:
     if force {
