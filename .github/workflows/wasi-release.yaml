@@ -37,7 +37,7 @@ jobs:
           cd /tmp/emscripten
           git checkout 3.1.61
           git sparse-checkout set system/include
-          echo "EMSDK_SYSTEM_INCLUDE=/tmp/emscripten" >> ${GITHUB_ENV}
+          echo "EMSDK_SYSTEM_INCLUDE=/tmp/emscripten/system/include" >> ${GITHUB_ENV}
 
     - name: 'Build skia-safe for wasm32-wasip1-threads with features gl,freetype-woff2,embed-freetype'
       shell: bash
