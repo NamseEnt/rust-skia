@@ -29,7 +29,7 @@ jobs:
       run: |
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-22/wasi-sdk-22.0-linux.tar.gz
         tar -xvf wasi-sdk-22.0-linux.tar.gz -C /tmp
-        echo "WASI_SDK=/tmp/wasi-sdk-22.0" >> ${GITHUB_ENV}
+        
 
     - name: Set up emscripten
       run: |
@@ -37,7 +37,6 @@ jobs:
           cd /tmp/emscripten
           git checkout 3.1.61
           git sparse-checkout set system/include
-          echo "EMSDK_SYSTEM_INCLUDE=/tmp/emscripten/system/include" >> ${GITHUB_ENV}
 
     - name: 'Build skia-safe for wasm32-wasip1-threads with features gl,freetype-woff2,embed-freetype'
       shell: bash
@@ -50,6 +49,14 @@ jobs:
       env:
         BUILD_ARTIFACTSTAGINGDIRECTORY: ${{ runner.temp }}
         EMCC_CFLAGS: "-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s MAX_WEBGL_VERSION=2"
+        WASI_SDK: /tmp/wasi-sdk-22.0
+        EMSDK_SYSTEM_INCLUDE: /tmp/emscripten/system/include
+        CLANGCC: /tmp/wasi-sdk-22.0/bin/clang
+        CLANGCXX: /tmp/wasi-sdk-22.0/bin/clang++
+        CC: /tmp/wasi-sdk-22.0/bin/clang
+        CXX: /tmp/wasi-sdk-22.0/bin/clang++
+        CLANG_PATH: /tmp/wasi-sdk-22.0/bin/clang
+        CARGO_TARGET_WASM32_WASIP1_THREADS_LINKER: /tmp/wasi-sdk-22.0/bin/wasm-l
 
     - name: 'Compress binaries'
       if: true
