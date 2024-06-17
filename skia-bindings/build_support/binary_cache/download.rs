@@ -158,7 +158,8 @@ pub fn try_prepare_download(binaries_config: &binaries_config::BinariesConfigura
     env::force_skia_build() || {
         let force_download = env::force_skia_binaries_download()
             || cargo::target().as_strs() == ("x86_64", "pc", "windows", Some("msvc"))
-            || cargo::target().as_strs() == ("wasm32", "wasip1", "threads", None);
+            || cargo::target().as_strs() == ("wasm32", "wasip1", "threads", None)
+            || cargo::target().as_strs() == ("x86_64", "unknown", "linux", Some("gnu"));
         if let Some((tag, key)) = should_try_download_binaries(binaries_config, force_download) {
             println!("TRYING TO DOWNLOAD AND INSTALL SKIA BINARIES: {tag}/{key}");
             let url = binaries::download_url(
@@ -201,6 +202,12 @@ fn should_try_download_binaries(
             return Some((
                 "0.74.0".to_string(),
                 "b9f56a71d3391196d029-wasm32-wasip1-threads-freetype-gl".to_string(),
+            ));
+        }
+        ("x86_64", "unknown", "linux", Some("gnu")) => {
+            return Some((
+                "0.74.0".to_string(),
+                "6133b06a751d007fd3a8-x86_64-unknown-linux-gnu-freetype-gl".to_string(),
             ));
         }
         _ => {}
