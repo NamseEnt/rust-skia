@@ -5,11 +5,11 @@ on:
       - release
 
 concurrency:
-  group: 'linux-release-${{ github.ref }}'
+  group: 'wasi-release-${{ github.ref }}'
   cancel-in-progress: true
 
 jobs:
-  linux-release-release-gl:
+  wasi-release-release-gl:
     runs-on: ubuntu-22.04
 
     steps:
