@@ -189,29 +189,31 @@ fn should_try_download_binaries(
     config: &binaries_config::BinariesConfiguration,
     force: bool,
 ) -> Option<(String, String)> {
-    let tag = cargo::package_version();
-
+    const RELEASE_COMMIT: &'str = "9a1286d1d20bcd4233aa";
     match cargo::target().as_strs() {
         ("x86_64", "pc", "windows", Some("msvc")) => {
             return Some((
                 "0.74.0".to_string(),
-                "160d230baf8d8bdbd207-x86_64-pc-windows-msvc-d3d-freetype".to_string(),
+                format!("{RELEASE_COMMIT}-x86_64-pc-windows-msvc-d3d-freetype"),
             ));
         }
         ("wasm32", "wasip1", "threads", _) => {
             return Some((
                 "0.74.0".to_string(),
-                "b9f56a71d3391196d029-wasm32-wasip1-threads-freetype-gl".to_string(),
+                format!("{RELEASE_COMMIT}-wasm32-wasip1-threads-freetype-gl"),
             ));
         }
         ("x86_64", "unknown", "linux", Some("gnu")) => {
             return Some((
                 "0.74.0".to_string(),
-                "6133b06a751d007fd3a8-x86_64-unknown-linux-gnu-freetype-gl".to_string(),
+                format!("{RELEASE_COMMIT}-x86_64-unknown-linux-gnu-freetype-gl"),
             ));
         }
         _ => {}
     }
+
+    
+    let tag = cargo::package_version();
 
     // For testing:
     if force {
