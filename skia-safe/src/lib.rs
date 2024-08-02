@@ -1,3 +1,4 @@
+#![allow(warnings)]
 #![macro_use]
 #![allow(clippy::upper_case_acronyms)]
 #![allow(clippy::non_send_fields_in_send_ty)]
