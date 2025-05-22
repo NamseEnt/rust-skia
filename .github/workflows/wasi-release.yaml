@@ -11,6 +11,8 @@ concurrency:
 jobs:
   wasi-release-release-gl:
     runs-on: ubuntu-22.04
+    env:
+      FORCE_SKIA_BUILD: 1
 
     steps:
     - uses: actions/checkout@v3

@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-2022
     env: 
       SKIA_DEBUG: 0
-
+      FORCE_SKIA_BUILD: 1
     steps:
     - uses: actions/checkout@v3
       with:
