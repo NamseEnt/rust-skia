@@ -174,23 +174,30 @@ fn should_try_download_binaries(
     force: bool,
 ) -> Option<(String, String)> {
     const RELEASE_COMMIT: &str = "511269ae96b78519258f";
+    const VERSION: &str = "0.84.0";
     match cargo::target().as_strs() {
         ("x86_64", "pc", "windows", Some("msvc")) => {
             return Some((
-                "0.74.0".to_string(),
-                format!("{RELEASE_COMMIT}-x86_64-pc-windows-msvc-d3d-freetype"),
+                VERSION.to_string(),
+                format!("{RELEASE_COMMIT}-x86_64-pc-windows-msvc-d3d-freetype-ftwoff2"),
             ));
         }
         ("wasm32", "wasip1", "threads", _) => {
             return Some((
-                "0.74.0".to_string(),
-                format!("{RELEASE_COMMIT}-wasm32-wasip1-threads-freetype-gl"),
+                VERSION.to_string(),
+                format!("{RELEASE_COMMIT}-wasm32-wasip1-threads-freetype-ftwoff2-gl"),
             ));
         }
         ("x86_64", "unknown", "linux", Some("gnu")) => {
             return Some((
-                "0.74.0".to_string(),
-                format!("{RELEASE_COMMIT}-x86_64-unknown-linux-gnu-freetype-gl"),
+                VERSION.to_string(),
+                format!("{RELEASE_COMMIT}-x86_64-unknown-linux-gnu-freetype-ftwoff2-gl"),
+            ));
+        }
+        ("aarch64", "apple", "darwin", _) => {
+            return Some((
+                VERSION.to_string(),
+                format!("{RELEASE_COMMIT}-aarch64-apple-darwin-freetype-ftwoff2-metal"),
             ));
         }
         _ => {}
