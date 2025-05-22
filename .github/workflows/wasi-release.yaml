@@ -54,7 +54,7 @@ jobs:
         BUILD_ARTIFACTSTAGINGDIRECTORY: ${{ runner.temp }}
         EMCC_CFLAGS: "-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s MAX_WEBGL_VERSION=2"
         WASI_SDK: /tmp/wasi-sdk-22.0
-        OPENGL_INCLUDE: /tmp/emscripten/system/include
+        WASI_EMSCRIPTEN_GLUE: /tmp/emscripten/system/include
         CLANGCC: /tmp/wasi-sdk-22.0/bin/clang
         CLANGCXX: /tmp/wasi-sdk-22.0/bin/clang++
         CC: /tmp/wasi-sdk-22.0/bin/clang
