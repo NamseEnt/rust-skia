@@ -176,10 +176,10 @@ impl RuntimeEffect {
 
     pub fn make_for_blender(
         sksl: impl AsRef<str>,
-        options: impl for<'a, 'b> Into<Option<&'a Options<'b>>>,
+        options: Option<&Options<'_>>,
     ) -> Result<RuntimeEffect, String> {
         let str = interop::String::from_str(sksl);
-        let options = options.into().copied().unwrap_or_default();
+        let options = options.copied().unwrap_or_default();
         let options = Self::construct_native_options(&options);
         let mut error = interop::String::default();
         RuntimeEffect::from_ptr(unsafe {
