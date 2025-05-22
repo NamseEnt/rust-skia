@@ -2,16 +2,14 @@
 #![allow(clippy::derivable_impls)]
 
 use crate::{
-    SkBlendMode, SkBlurStyle, SkCanvas_Lattice_RectType, SkClipOp, SkPDF_Metadata_CompressionLevel,
-    SkPaint_Cap, SkPaint_Join, SkParsePath_PathEncoding, SkPathDirection, SkPath_ArcSize,
-    SkTileMode, SkYUVColorSpace,
+    SkArc_Type, SkBlendMode, SkBlurStyle, SkCanvas_Lattice_RectType, SkClipOp,
+    SkPDF_Metadata_CompressionLevel, SkPaint_Cap, SkPaint_Join, SkParsePath_PathEncoding,
+    SkPathDirection, SkTileMode, SkYUVColorSpace,
 };
 
-impl Default for SkPath_ArcSize {
+impl Default for SkArc_Type {
     fn default() -> Self {
-        // Assuming kSmall_ArcSize is converted to Small or KSmallArcSize by bindgen.
-        // This might need adjustment based on the actual generated binding name.
-        Self::Small // Or Self::KSmallArcSize, or Self::kSmall_ArcSize depending on bindgen output
+        Self::Arc
     }
 }
 
