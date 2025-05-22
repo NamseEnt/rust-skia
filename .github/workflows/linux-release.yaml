@@ -1,15 +1,15 @@
-name: 'wasi-release'
+name: 'linux-release'
 on:
   push:
     branches:
       - release
 
 concurrency:
-  group: 'wasi-release-${{ github.ref }}'
+  group: 'linux-release-${{ github.ref }}'
   cancel-in-progress: true
 
 jobs:
-  wasi-release-release-gl:
+  linux-release-release-gl:
     runs-on: ubuntu-22.04
 
     steps:
@@ -25,38 +25,16 @@ jobs:
         rustup update
         rustup target add wasm32-wasip1-threads
 
-    - name: Set up wasi-sdk
-      run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-22/wasi-sdk-22.0-linux.tar.gz
-        tar -xvf wasi-sdk-22.0-linux.tar.gz -C /tmp
-        
-
-    - name: Set up emscripten
-      run: |
-          git clone --filter=blob:none --no-checkout https://github.com/emscripten-core/emscripten /tmp/emscripten
-          cd /tmp/emscripten
-          git checkout 3.1.61
-          git sparse-checkout set system/include
-
-    - name: 'Build skia-safe for wasm32-wasip1-threads with features gl,freetype-woff2,embed-freetype'
+    - name: 'Build skia-safe for x86_64-unknown-linux-gnu with features gl,freetype-woff2,embed-freetype'
       shell: bash
       run: |
         cargo clean
-        cargo build -p skia-safe --release --features "gl,freetype-woff2,embed-freetype" --target wasm32-wasip1-threads
+        cargo build -p skia-safe --release --features "gl,freetype-woff2,embed-freetype" --target x86_64-unknown-linux-gnu
         echo "SKIA_BINARIES_TAG=$(cat "${BUILD_ARTIFACTSTAGINGDIRECTORY}/skia-binaries/tag.txt")" >> ${GITHUB_ENV}
         echo "SKIA_BINARIES_KEY=$(cat "${BUILD_ARTIFACTSTAGINGDIRECTORY}/skia-binaries/key.txt")" >> ${GITHUB_ENV}
         echo "SKIA_STAGING_PATH=${BUILD_ARTIFACTSTAGINGDIRECTORY}" >> ${GITHUB_ENV}
       env:
         BUILD_ARTIFACTSTAGINGDIRECTORY: ${{ runner.temp }}
-        EMCC_CFLAGS: "-s ERROR_ON_UNDEFINED_SYMBOLS=0 -s MAX_WEBGL_VERSION=2"
-        WASI_SDK: /tmp/wasi-sdk-22.0
-        EMSDK_SYSTEM_INCLUDE: /tmp/emscripten/system/include
-        CLANGCC: /tmp/wasi-sdk-22.0/bin/clang
-        CLANGCXX: /tmp/wasi-sdk-22.0/bin/clang++
-        CC: /tmp/wasi-sdk-22.0/bin/clang
-        CXX: /tmp/wasi-sdk-22.0/bin/clang++
-        CLANG_PATH: /tmp/wasi-sdk-22.0/bin/clang
-        CARGO_TARGET_WASM32_WASIP1_THREADS_LINKER: /tmp/wasi-sdk-22.0/bin/wasm-ld
 
     - name: 'Compress binaries'
       if: true

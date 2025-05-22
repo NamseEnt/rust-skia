@@ -142,7 +142,8 @@ pub fn try_prepare_download(binaries_config: &binaries_config::BinariesConfigura
         let force_download = env::force_skia_binaries_download()
             || cargo::target().as_strs() == ("x86_64", "pc", "windows", Some("msvc"))
             || cargo::target().as_strs() == ("wasm32", "wasip1", "threads", None)
-            || cargo::target().as_strs() == ("x86_64", "unknown", "linux", Some("gnu"));
+            || cargo::target().as_strs() == ("x86_64", "unknown", "linux", Some("gnu"))
+            || cargo::target().as_strs() == ("aarch64", "apple", "darwin", None);
         if let Some((tag, key)) = should_try_download_binaries(binaries_config, force_download) {
             println!("TRYING TO DOWNLOAD AND INSTALL SKIA BINARIES: {tag}/{key}");
             let url = binaries::download_url(
@@ -195,7 +196,6 @@ fn should_try_download_binaries(
         _ => {}
     }
 
-    
     let tag = cargo::package_version();
 
     // For testing:
