@@ -44,7 +44,7 @@ pub fn jobs(workflow: &Workflow) -> Vec<Job> {
 }
 
 pub fn qa_jobs() -> Vec<Job> {
-    const QA_ALL_FEATURES: &str = "gl,vulkan,textlayout,svg,webp";
+    const QA_ALL_FEATURES: &str = "gl,vulkan,textlayout,svg,ureq,webp,vulkan-window";
     [
         Job {
             name: "stable-all-features".into(),
@@ -100,10 +100,13 @@ pub fn release_jobs(workflow: &Workflow) -> Vec<Job> {
         HostOS::MacOS => {
             jobs.push(release_job("metal"));
             jobs.push(release_job("metal,textlayout"));
+            jobs.push(release_job("metal,gl,textlayout"));
         }
     }
 
     jobs.extend(freya_release_jobs(workflow));
+    jobs.extend(vizia_release_jobs(workflow));
+    jobs.extend(skia_canvas_release_jobs(workflow));
 
     jobs
 }
@@ -121,6 +124,44 @@ fn freya_release_jobs(workflow: &Workflow) -> Vec<Job> {
                 // <https://github.com/rust-skia/rust-skia/issues/737>
                 release_job("gl,textlayout,svg,wayland,x11"),
             ]
+        }
+    }
+}
+
+/// Specific binary releases for the Vizia GUI library <https://github.com/vizia/vizia>
+/// <https://github.com/rust-skia/rust-skia/discussions/961#discussioncomment-10485430>
+fn vizia_release_jobs(workflow: &Workflow) -> Vec<Job> {
+    match workflow.host_os {
+        HostOS::MacOS => {
+            vec![release_job("gl,vulkan,textlayout,svg")]
+        }
+        HostOS::Windows => {
+            vec![release_job("gl,vulkan,textlayout,svg,d3d")]
+        }
+        HostOS::Linux => {
+            // vec![release_job("gl,vulkan,textlayout,svg,wayland,x11")]
+            // Alternative: Use the full feature set `gl,vulkan,textlayout,svg,wayland,x11,webp`
+            vec![]
+        }
+    }
+}
+
+// Binaries for Skia Canvas: <https://github.com/samizdatco/skia-canvas>
+// <https://github.com/rust-skia/rust-skia/pull/1068#issuecomment-2518894492>
+fn skia_canvas_release_jobs(workflow: &Workflow) -> Vec<Job> {
+    match workflow.host_os {
+        HostOS::MacOS => {
+            vec![release_job("metal,textlayout,webp,svg")]
+        }
+        HostOS::Windows => {
+            vec![release_job(
+                "vulkan,embed-freetype,freetype-woff2,textlayout,webp,svg",
+            )]
+        }
+        HostOS::Linux => {
+            vec![release_job(
+                "vulkan,embed-freetype,freetype-woff2,textlayout,webp,svg",
+            )]
         }
     }
 }
@@ -186,7 +227,7 @@ fn android_targets() -> Vec<TargetConf> {
 }
 
 fn wasm_targets() -> Vec<TargetConf> {
-    // `svg` does not build in skia-safe because of the `ureq` dependency (although it builds in
-    // skia-bindings just fine): <https://github.com/briansmith/ring/issues/1043>
-    [TargetConf::new("wasm32-unknown-emscripten", "").disable("svg")].into()
+    // Compiling ureq-proto v0.3.0
+    //   error[E0277]: the trait bound `SystemRandom: ring::rand::SecureRandom` is not satisfied
+    [TargetConf::new("wasm32-unknown-emscripten", "").disable("ureq")].into()
 }

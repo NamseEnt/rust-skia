@@ -1,47 +1,46 @@
 use skia_bindings as sb;
-use std::ptr;
+use skia_bindings::skgpu_GpuStats;
 
-pub use skia_bindings::GrBackendApi as BackendAPI;
-variant_name!(BackendAPI::OpenGL);
-
-pub use skia_bindings::GrSurfaceOrigin as SurfaceOrigin;
-variant_name!(SurfaceOrigin::BottomLeft);
-
-// Note: BackendState is in gl/types.rs/
+pub use sb::skgpu_BackendApi as BackendApi;
+variant_name!(BackendApi::Metal);
 
 #[repr(C)]
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct FlushInfo {
-    // TODO: wrap access to the following fields in a safe way:
-    num_semaphores: usize,
-    signal_semaphores: *mut sb::GrBackendSemaphore,
-    finished_proc: sb::GrGpuFinishedProc,
-    finished_context: sb::GrGpuFinishedContext,
-    submitted_proc: sb::GrGpuSubmittedProc,
-    submitted_context: sb::GrGpuSubmittedContext,
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub struct Budgeted(bool);
+native_transmutable!(sb::skgpu_Budgeted, Budgeted, budgeted_layout);
+
+#[allow(non_upper_case_globals)]
+impl Budgeted {
+    // we want this look like enum case names.
+    pub const No: Budgeted = Budgeted(false);
+    pub const Yes: Budgeted = Budgeted(true);
 }
 
-impl Default for FlushInfo {
-    fn default() -> Self {
-        Self {
-            num_semaphores: 0,
-            signal_semaphores: ptr::null_mut(),
-            finished_proc: None,
-            finished_context: ptr::null_mut(),
-            submitted_proc: None,
-            submitted_context: ptr::null_mut(),
-        }
+// TODO: CallbackResult
+
+pub use skia_bindings::skgpu_Mipmapped as Mipmapped;
+
+pub use skia_bindings::skgpu_Protected as Protected;
+variant_name!(Protected::Yes);
+
+pub use skia_bindings::skgpu_Renderable as Renderable;
+variant_name!(Renderable::No);
+
+pub use skia_bindings::skgpu_Origin as Origin;
+variant_name!(Origin::TopLeft);
+
+bitflags! {
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct GpuStatsFlags : u32 {
+        const NONE = sb::skgpu_GpuStatsFlags_kNone as _;
+        const ELAPSED_TIME = sb::skgpu_GpuStatsFlags_kElapsedTime as _;
     }
 }
 
-native_transmutable!(sb::GrFlushInfo, FlushInfo, flush_info_layout);
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct GpuStats {
+    pub elapsed_time: u64,
+}
 
-pub use sb::GrSemaphoresSubmitted as SemaphoresSubmitted;
-variant_name!(SemaphoresSubmitted::Yes);
-
-pub use sb::GrPurgeResourceOptions as PurgeResourceOptions;
-variant_name!(PurgeResourceOptions::AllResources);
-
-pub use sb::GrSyncCpu as SyncCpu;
-variant_name!(SyncCpu::Yes);
+native_transmutable!(skgpu_GpuStats, GpuStats, gpu_stats_layout);

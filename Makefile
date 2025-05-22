@@ -1,6 +1,6 @@
-doc-features-win="gl,vulkan,d3d,textlayout,svg,webp"
-doc-features-mac="gl,vulkan,metal,textlayout,svg,webp"
-doc-features-docs-rs="gl,textlayout,svg,webp"
+doc-features-win="gl,vulkan,d3d,textlayout,svg,ureq,webp"
+doc-features-mac="gl,vulkan,metal,textlayout,svg,ureq,webp"
+doc-features-docs-rs="gl,textlayout,svg,ureq,webp"
 
 .PHONY: all
 all:
@@ -59,6 +59,12 @@ publish-bindings:
 publish-bindings-docs: bindings-docs
 	cd skia-bindings && cp /tmp/bindings.rs bindings_docs.rs
 	cd skia-bindings && cargo publish -vv --no-verify --allow-dirty
+
+# SVG Macros are most likely changed rarely. So this is separate.
+
+.PHONY: publish-svg-macros
+publish-svg-macros:
+	cd skia-svg-macros && cargo publish -vv
 
 # Generates /tmp/bindings.rs with docs-rs features.
 

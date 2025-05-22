@@ -2,13 +2,16 @@ use std::{ops::Deref, ptr};
 
 use skia_bindings as sb;
 
-mod backend_context;
-mod mutable_texture_state;
-mod types;
+mod vulkan_backend_context;
+mod vulkan_mutable_texture_state;
+mod vulkan_types;
 
-pub use backend_context::*;
-pub use mutable_texture_state::*;
-pub use types::*;
+pub use super::ganesh::vk::vk_types::*;
+pub use vulkan_backend_context::*;
+pub use vulkan_mutable_texture_state::*;
+pub use vulkan_types::*;
+
+pub use crate::gpu::ganesh::vk::BackendDrawableInfo;
 
 //
 // Additional Vulkan re-exports and definitions.

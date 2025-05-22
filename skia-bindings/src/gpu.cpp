@@ -1,17 +1,16 @@
 #include "bindings.h"
 
-#include "include/gpu/GrDirectContext.h"
-#include "include/gpu/GrBackendDrawableInfo.h"
-#include "include/gpu/GrYUVABackendTextures.h"
-#include "include/gpu/MutableTextureState.h"
-#include "include/gpu/ganesh/SkImageGanesh.h"
-#include "include/gpu/ganesh/SkSurfaceGanesh.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkDrawable.h"
 #include "include/core/SkPicture.h"
 #include "include/core/SkSurface.h"
 #include "include/core/SkImageGenerator.h"
+#include "include/gpu/MutableTextureState.h"
+#include "include/gpu/ganesh/GrDirectContext.h"
+#include "include/gpu/ganesh/GrYUVABackendTextures.h"
+#include "include/gpu/ganesh/SkImageGanesh.h"
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
 
 extern "C" void C_GpuUnreferencedTypes(skgpu::Origin *) {}
 
@@ -189,30 +188,6 @@ extern "C" bool C_GrRecordingContext_colorTypeSupportedAsSurface(const GrRecordi
 }
 
 //
-// gpu/GrBackendDrawableInfo.h
-//
-
-extern "C" void C_GrBackendDrawableInfo_Construct(GrBackendDrawableInfo* uninitialized) {
-    new(uninitialized) GrBackendDrawableInfo();
-}
-
-extern "C" void C_GrBackendDrawableInfo_Construct2(GrBackendDrawableInfo* uninitialized, const GrVkDrawableInfo* info) {
-    new(uninitialized) GrBackendDrawableInfo(*info);
-}
-
-extern "C" void C_GrBackendDrawableInfo_destruct(GrBackendDrawableInfo* self) {
-    self->~GrBackendDrawableInfo();
-}
-
-extern "C" bool C_GrBackendDrawableInfo_isValid(const GrBackendDrawableInfo* self) {
-    return self->isValid();
-}
-
-extern "C" GrBackendApi C_GrBackendDrawableInfo_backend(const GrBackendDrawableInfo* self) {
-    return self->backend();
-}
-
-//
 // gpu/GrYUVABackendTextures.h
 //
 
@@ -243,6 +218,14 @@ extern "C" bool C_GrYUVABackendTextureInfo_equals(const GrYUVABackendTextureInfo
 
 extern "C" void C_GrYUVABackendTextures_destruct(GrYUVABackendTextures* self) {
     self->~GrYUVABackendTextures();
+}
+
+extern "C" const SkYUVAInfo* C_GrYUVABackendTextures_yuvaInfo(const GrYUVABackendTextures* self) {
+    return &self->yuvaInfo();
+}
+
+extern "C" GrSurfaceOrigin C_GrYUVABackendTextures_textureOrigin(const GrYUVABackendTextures* self) {
+    return self->textureOrigin();
 }
 
 extern "C" const GrBackendTexture* C_GrYUVABackendTextures_textures(const GrYUVABackendTextures* self) {

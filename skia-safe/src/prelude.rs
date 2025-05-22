@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use std::{
+    fmt::Debug,
     hash::{Hash, Hasher},
     marker::PhantomData,
     mem::{self, MaybeUninit},
@@ -9,19 +10,21 @@ use std::{
 };
 
 use skia_bindings::{
-    C_SkRefCntBase_ref, C_SkRefCntBase_unique, C_SkRefCntBase_unref, SkRefCnt, SkRefCntBase,
+    sk_sp, C_SkRefCntBase_ref, C_SkRefCntBase_unique, C_SkRefCntBase_unref, SkRefCnt, SkRefCntBase,
 };
 
 /// Convert any reference into any other.
 pub(crate) unsafe fn transmute_ref<FromT, ToT>(from: &FromT) -> &ToT {
     // TODO: can we do this statically for all instantiations of transmute_ref?
     debug_assert_eq!(mem::size_of::<FromT>(), mem::size_of::<ToT>());
+    debug_assert_eq!(mem::align_of::<FromT>(), mem::align_of::<ToT>());
     &*(from as *const FromT as *const ToT)
 }
 
 pub(crate) unsafe fn transmute_ref_mut<FromT, ToT>(from: &mut FromT) -> &mut ToT {
     // TODO: can we do this statically for all instantiations of transmute_ref_mut?
     debug_assert_eq!(mem::size_of::<FromT>(), mem::size_of::<ToT>());
+    debug_assert_eq!(mem::align_of::<FromT>(), mem::align_of::<ToT>());
     &mut *(from as *mut FromT as *mut ToT)
 }
 
@@ -575,6 +578,12 @@ impl<N: NativeRefCounted> RCHandle<N> {
         unsafe { transmute_ref(n) }
     }
 
+    /// Create a reference to a all non-null sk_sp<N> slice.
+    pub(crate) fn from_non_null_sp_slice(sp_slice: &[sk_sp<N>]) -> &[Self] {
+        debug_assert!(sp_slice.iter().all(|v| !v.fPtr.is_null()));
+        unsafe { mem::transmute(sp_slice) }
+    }
+
     /// Returns the pointer to the handle.
     #[allow(unused)]
     pub(crate) fn as_ptr(&self) -> &NonNull<N> {
@@ -742,14 +751,19 @@ where
         r
     }
 
-    /// Provides access to the Rust value through a
-    /// transmuted reference to the native value.
+    /// Returns a reference to the Rust value by transmuting a reference to the native value.
     fn from_native_ref(nt: &NT) -> &Self {
         unsafe { transmute_ref(nt) }
     }
 
-    /// Provides access to the Rust value through a
-    /// transmuted reference to the native mutable value.
+    /// Returns a reference to the Rust array reference by transmuting a reference to the native
+    /// array.
+    fn from_native_array_ref<const N: usize>(nt: &[NT; N]) -> &[Self; N] {
+        unsafe { transmute_ref(nt) }
+    }
+
+    /// Returns a reference to the Rust value through a transmuted reference to the native mutable
+    /// value.
     fn from_native_ref_mut(nt: &mut NT) -> &mut Self {
         unsafe { transmute_ref_mut(nt) }
     }
@@ -764,9 +778,11 @@ where
         np as _
     }
 
-    /// Runs a test that proves that the native and the Rust type are of the same size.
+    /// Runs a test that guarantees that the native and the Rust type are of the same size and
+    /// alignment.
     fn test_layout() {
         assert_eq!(mem::size_of::<Self>(), mem::size_of::<NT>());
+        assert_eq!(mem::align_of::<Self>(), mem::align_of::<NT>());
     }
 
     fn construct(construct: impl FnOnce(*mut NT)) -> Self {
@@ -905,18 +921,12 @@ impl<E> AsPointerOrNullMut<E> for Option<Vec<E>> {
     }
 }
 
-// impl Trait + 'a or '_ is almost always wrong:
-// <https://www.youtube.com/watch?v=CWiz_RtA1Hw>
-pub trait Captures<U> {}
-
-impl<T: ?Sized, U> Captures<U> for T {}
-
 // Wraps a handle so that the Rust's borrow checker assumes it represents
 // something that borrows something else.
 #[repr(transparent)]
 pub struct Borrows<'a, H>(H, PhantomData<&'a ()>);
 
-impl<'a, H> Deref for Borrows<'a, H> {
+impl<H> Deref for Borrows<'_, H> {
     type Target = H;
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -925,13 +935,13 @@ impl<'a, H> Deref for Borrows<'a, H> {
 
 // TODO: this is most likely unsafe because someone could replace the
 // value the reference is pointing to.
-impl<'a, H> DerefMut for Borrows<'a, H> {
+impl<H> DerefMut for Borrows<'_, H> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<'a, H> Borrows<'a, H> {
+impl<H> Borrows<'_, H> {
     /// Notify that the borrowed dependency is not referred to anymore and return the handle.
     /// # Safety
     /// The borrowed dependency must be removed before calling `release()`.
@@ -950,7 +960,7 @@ impl<T: Sized> BorrowsFrom for T {
     }
 }
 
-impl<'a, H> Borrows<'a, H> {
+impl<H> Borrows<'_, H> {
     pub(crate) unsafe fn unchecked_new(h: H) -> Self {
         Self(h, PhantomData)
     }
@@ -971,8 +981,22 @@ pub struct Sendable<H: ConditionallySend>(H);
 unsafe impl<H: ConditionallySend> Send for Sendable<H> {}
 
 impl<H: ConditionallySend> Sendable<H> {
+    #[deprecated(note = "Use Sendable::into_inner() instead")]
     pub fn unwrap(self) -> H {
         self.0
+    }
+
+    pub fn into_inner(self) -> H {
+        self.0
+    }
+}
+
+impl<H> Debug for Sendable<H>
+where
+    H: Debug + ConditionallySend,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Sendable").field(&self.0).finish()
     }
 }
 
@@ -1032,5 +1056,24 @@ pub(crate) mod safer {
             ptr
         };
         slice::from_raw_parts_mut(ptr, len)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use skia_bindings::{sk_sp, SkFontMgr};
+
+    use crate::RCHandle;
+
+    #[test]
+    fn sp_equals_size_and_alignment_of_rc_handle() {
+        assert_eq!(
+            size_of::<sk_sp<SkFontMgr>>(),
+            size_of::<RCHandle<SkFontMgr>>()
+        );
+        assert_eq!(
+            align_of::<sk_sp<SkFontMgr>>(),
+            align_of::<RCHandle<SkFontMgr>>()
+        );
     }
 }

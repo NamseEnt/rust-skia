@@ -1,6 +1,8 @@
 pub mod pdf {
     use std::{ffi::CString, fmt, io, mem, ptr};
 
+    use crate::Canvas;
+
     use skia_bindings::{
         self as sb, SkPDF_AttributeList, SkPDF_DateTime, SkPDF_Metadata, SkPDF_StructureElementNode,
     };
@@ -130,7 +132,7 @@ pub mod pdf {
 
     /// A node in a PDF structure tree, giving a semantic representation
     /// of the content.  Each node ID is associated with content
-    /// by passing the [`crate::Canvas`] and node ID to [`Self::set_node_id()`] when drawing.
+    /// by passing the [`crate::Canvas`] and node ID to [`set_node_id()`] when drawing.
     /// NodeIDs should be unique within each tree.
     impl StructureElementNode {
         pub fn new(type_string: impl AsRef<str>) -> Self {
@@ -172,7 +174,7 @@ pub mod pdf {
         }
 
         pub fn child_vector(&self) -> &[StructureElementNode] {
-            let mut ptr = ptr::null_mut();
+            let mut ptr = ptr::null();
             unsafe {
                 let len = sb::C_SkPDF_StructureElementNode_getChildVector(self.native(), &mut ptr);
                 safer::from_raw_parts(ptr as _, len)
@@ -345,6 +347,9 @@ pub mod pdf {
             if let Some(encoding_quality) = metadata.encoding_quality {
                 internal.fEncodingQuality = encoding_quality
             }
+            if let Some(structure_element_tree) = &metadata.structure_element_tree_root {
+                internal.fStructureElementTreeRoot = structure_element_tree.0.as_ptr();
+            }
             internal.fCompressionLevel = metadata.compression_level
         }
 
@@ -378,15 +383,33 @@ pub mod pdf {
             Self::construct(|pdf_md| unsafe { sb::C_SkPDF_Metadata_Construct(pdf_md) })
         }
     }
+
+    pub fn set_node_id(canvas: &Canvas, node_id: i32) {
+        unsafe {
+            sb::C_SkPDF_SetNodeId(canvas.native_mut(), node_id);
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::pdf::StructureElementNode;
+
     use super::pdf;
 
     #[test]
     fn create_attribute_list() {
         let mut _al = pdf::AttributeList::default();
         _al.append_float_array("Owner", "Name", &[1.0, 2.0, 3.0]);
+    }
+
+    #[test]
+    fn structure_element_node_child_vector() {
+        let mut root = StructureElementNode::new("root");
+        root.append_child(StructureElementNode::new("nested"));
+        root.append_child(StructureElementNode::new("nested2"));
+        let v = root.child_vector();
+        assert_eq!(v[0].type_string(), "nested");
+        assert_eq!(v[1].type_string(), "nested2");
     }
 }

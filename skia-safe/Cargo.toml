@@ -18,9 +18,10 @@ categories = [
 ]
 license = "MIT"
 
-version = "0.74.0"
+version = "0.84.0"
 authors = ["Armin Sander <armin@replicator.org>"]
 edition = "2021"
+rust-version.workspace = true
 
 [lib]
 doctest = false
@@ -38,7 +39,8 @@ vulkan = ["gpu", "skia-bindings/vulkan"]
 metal = ["gpu", "skia-bindings/metal"]
 d3d = ["gpu", "windows", "skia-bindings/d3d"]
 textlayout = ["skia-bindings/textlayout"]
-svg = ["skia-bindings/svg", "ureq", "base64"]
+svg = ["skia-bindings/svg", "dep:base64", "dep:percent-encoding", "skia-svg-macros"]
+ureq = ["dep:ureq"]
 webp = ["webp-encode", "webp-decode"]
 webp-encode = ["skia-bindings/webp-encode"]
 webp-decode = ["skia-bindings/webp-decode"]
@@ -47,18 +49,27 @@ binary-cache = ["skia-bindings/binary-cache"]
 embed-icudtl = ["skia-bindings/embed-icudtl"]
 embed-freetype = ["skia-bindings/embed-freetype"]
 freetype-woff2 = ["skia-bindings/freetype-woff2"]
+# test only
+save-svg-images = []
 
 # implied only, do not use
 gpu = []
 shaper = ["textlayout", "skia-bindings/shaper"]
 
+# vulkan-window example
+vulkan-window = ["dep:ash", "dep:vulkano", "winit/rwh_05"]
+
 [dependencies]
 bitflags = "2.0"
 lazy_static = "1.4"
-skia-bindings = { version = "=0.74.0", path = "../skia-bindings", default-features = false }
+skia-bindings = { version = "=0.84.0", path = "../skia-bindings", default-features = false }
+
+# vulkan-window example
+ash = { version = "^0.38.0", optional = true }
+vulkano = { version = "0.35", optional = true }
 
 # D3D types & ComPtr
-windows = { version = "0.56.0", features = [
+windows = { version = "0.61.1", features = [
     "Win32",
     "Win32_Graphics",
     "Win32_Graphics_Dxgi",
@@ -69,35 +80,36 @@ windows = { version = "0.56.0", features = [
 ], optional = true }
 
 # svg
-ureq = { version = "2.8.0", optional = true }
+ureq = { version = "3.0.4", optional = true }
 base64 = { version = "0.22.0", optional = true }
+percent-encoding = { version = "2.3.1", optional = true }
+skia-svg-macros = { version = "0.1.0", path = "../skia-svg-macros", optional = true }
 
 [dev-dependencies]
 serial_test = "3.0"
 static_assertions = "1.1"
+winit = "0.30.2"
 
 # gl-window
 [target.'cfg(all(not(target_os = "android"), not(target_os = "emscripten"), not(target_os = "ios")))'.dev-dependencies]
-glutin = "0.31.1"
-glutin-winit = { version = "0.4" }
-winit = { version = "0.29.3" }
-raw-window-handle = { version = "0.5.0" }
-gl-rs = { package = "gl", version = "0.14.0" }
+glutin = "0.32.0"
+glutin-winit = "0.5.0"
+raw-window-handle = "0.6.0"
+gl-rs = { version = "0.14.0", package = "gl" }
 
 # metal-window
 [target.'cfg(target_os = "macos")'.dev-dependencies]
 metal-rs = { package = "metal", version = "0.24.0" }
-winit = "0.29.3"
-raw-window-handle = { version = "0.6.0" }
+raw-window-handle = "0.6.0"
 objc = "0.2.7"
-cocoa = "0.25.0"
+cocoa = "0.26.0"
 core-graphics-types = "0.1.1"
 foreign-types-shared = "0.1.1"
 
 # d3d-window
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 anyhow = { version = "1.0.75" }
-windows = { version = "0.56.0", features = [
+windows = { version = "0.61.1", features = [
     "Win32",
     "Win32_Graphics",
     "Win32_Graphics_Dxgi",
@@ -106,4 +118,3 @@ windows = { version = "0.56.0", features = [
     "Win32_Foundation",
     "Win32_Graphics_Dxgi_Common",
 ] }
-winit = "0.29.4"

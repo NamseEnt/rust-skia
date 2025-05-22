@@ -64,24 +64,24 @@ impl ColorFilter {
         unsafe { self.native().isAlphaUnchanged() }
     }
 
+    #[deprecated(since = "0.79.0", note = "Use filter_color4f()")]
     pub fn filter_color(&self, color: impl Into<Color>) -> Color {
-        // Color resolves to u32, so the C++ ABI can be used.
-        Color::from_native_c(unsafe { self.native().filterColor(color.into().into_native()) })
+        self.filter_color4f(color.into(), None, None).to_color()
     }
 
     /// Converts the src color (in src colorspace), into the dst colorspace,
     /// then applies this filter to it, returning the filtered color in the dst colorspace.
     pub fn filter_color4f(
         &self,
-        color: impl AsRef<Color4f>,
-        src_color_space: &ColorSpace,
+        color: impl Into<Color4f>,
+        src_color_space: Option<&ColorSpace>,
         dst_color_space: Option<&ColorSpace>,
     ) -> Color4f {
         Color4f::from_native_c(unsafe {
             sb::C_SkColorFilter_filterColor4f(
                 self.native(),
-                color.as_ref().native(),
-                src_color_space.native_mut_force(),
+                color.into().native(),
+                src_color_space.native_ptr_or_null_mut_force(),
                 dst_color_space.native_ptr_or_null_mut_force(),
             )
         })
@@ -141,13 +141,18 @@ pub mod color_filters {
         ColorFilter::from_ptr(unsafe { sb::C_SkColorFilters_Blend(c.into().into_native(), mode) })
     }
 
-    pub fn matrix(color_matrix: &ColorMatrix) -> ColorFilter {
-        ColorFilter::from_ptr(unsafe { sb::C_SkColorFilters_Matrix(color_matrix.native()) })
+    pub use sb::SkColorFilters_Clamp as Clamp;
+    variant_name!(Clamp::No);
+
+    pub fn matrix(color_matrix: &ColorMatrix, clamp: impl Into<Option<Clamp>>) -> ColorFilter {
+        let clamp = clamp.into().unwrap_or(Clamp::Yes);
+        ColorFilter::from_ptr(unsafe { sb::C_SkColorFilters_Matrix(color_matrix.native(), clamp) })
             .unwrap()
     }
 
-    pub fn matrix_row_major(array: &[scalar; 20]) -> ColorFilter {
-        ColorFilter::from_ptr(unsafe { sb::C_SkColorFilters_MatrixRowMajor(array.as_ptr()) })
+    pub fn matrix_row_major(array: &[scalar; 20], clamp: impl Into<Option<Clamp>>) -> ColorFilter {
+        let clamp = clamp.into().unwrap_or(Clamp::Yes);
+        ColorFilter::from_ptr(unsafe { sb::C_SkColorFilters_MatrixRowMajor(array.as_ptr(), clamp) })
             .unwrap()
     }
 
@@ -234,7 +239,6 @@ pub mod color_filters {
 }
 
 #[cfg(test)]
-
 mod tests {
     use crate::prelude::*;
     use crate::{color_filters, BlendMode, Color, Color4f, ColorSpace};
@@ -263,10 +267,11 @@ mod tests {
         let color = Color::CYAN;
         let mode = BlendMode::ColorBurn;
         let cf = color_filters::blend(color, mode).unwrap();
+        #[allow(deprecated)]
         let _fc = cf.filter_color(Color::DARK_GRAY);
         let _fc = cf.filter_color4f(
             Color4f::new(0.0, 0.0, 0.0, 0.0),
-            &ColorSpace::new_srgb(),
+            Some(&ColorSpace::new_srgb()),
             None,
         );
     }

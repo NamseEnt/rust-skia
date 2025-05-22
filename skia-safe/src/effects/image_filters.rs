@@ -3,9 +3,9 @@ use std::ptr;
 use skia_bindings::{self as sb, SkImageFilter, SkRect};
 
 use crate::{
-    prelude::*, scalar, Blender, Color, ColorChannel, ColorFilter, CubicResampler, IPoint, IRect,
-    ISize, Image, ImageFilter, Matrix, Picture, Point3, Rect, SamplingOptions, Shader, TileMode,
-    Vector,
+    prelude::*, scalar, Blender, Color, Color4f, ColorChannel, ColorFilter, ColorSpace,
+    CubicResampler, IPoint, IRect, ISize, Image, ImageFilter, Matrix, Picture, Point3, Rect,
+    SamplingOptions, Shader, TileMode, Vector,
 };
 
 /// This is just a convenience type to allow passing [`IRect`]s, [`Rect`]s, and optional references
@@ -23,7 +23,7 @@ impl CropRect {
     }
 
     fn native(&self) -> *const SkRect {
-        match self.0 {
+        match &self.0 {
             None => ptr::null(),
             Some(r) => r.native(),
         }
@@ -234,24 +234,26 @@ pub fn displacement_map(
 /// * `sigma_x` - The blur radius for the shadow, along the X axis.
 /// * `sigma_y` - The blur radius for the shadow, along the Y axis.
 /// * `color` - The color of the drop shadow.
+/// * `color_space` - The color space of the drop shadow color.
 /// * `input` - The input filter, or will use the source bitmap if this is null.
 /// * `crop_rect` - Optional rectangle that crops the input and output.
 pub fn drop_shadow(
     offset: impl Into<Vector>,
     (sigma_x, sigma_y): (scalar, scalar),
-    color: impl Into<Color>,
+    color: impl Into<Color4f>,
+    color_space: impl Into<Option<ColorSpace>>,
     input: impl Into<Option<ImageFilter>>,
     crop_rect: impl Into<CropRect>,
 ) -> Option<ImageFilter> {
     let delta = offset.into();
-    let color = color.into();
     ImageFilter::from_ptr(unsafe {
         sb::C_SkImageFilters_DropShadow(
             delta.x,
             delta.y,
             sigma_x,
             sigma_y,
-            color.into_native(),
+            color.into().native(),
+            color_space.into().into_ptr_or_null(),
             input.into().into_ptr_or_null(),
             crop_rect.into().native(),
         )
@@ -265,24 +267,27 @@ pub fn drop_shadow(
 /// * `sigma_x` - The blur radius for the shadow, along the X axis.
 /// * `sigma_y` - The blur radius for the shadow, along the Y axis.
 /// * `color` - The color of the drop shadow.
+/// * `color_space` - The color space of the drop shadow color.
 /// * `input` - The input filter, or will use the source bitmap if this is null.
 /// * `crop_rect` - Optional rectangle that crops the input and output.
 pub fn drop_shadow_only(
     offset: impl Into<Vector>,
     (sigma_x, sigma_y): (scalar, scalar),
-    color: impl Into<Color>,
+    color: impl Into<Color4f>,
+    color_space: impl Into<Option<ColorSpace>>,
     input: impl Into<Option<ImageFilter>>,
     crop_rect: impl Into<CropRect>,
 ) -> Option<ImageFilter> {
     let delta = offset.into();
-    let color = color.into();
+
     ImageFilter::from_ptr(unsafe {
         sb::C_SkImageFilters_DropShadowOnly(
             delta.x,
             delta.y,
             sigma_x,
             sigma_y,
-            color.into_native(),
+            color.into().native(),
+            color_space.into().into_ptr_or_null(),
             input.into().into_ptr_or_null(),
             crop_rect.into().native(),
         )
@@ -481,9 +486,25 @@ pub fn picture<'a>(
     })
 }
 
-// TODO: RuntimeShader
+pub fn runtime_shader(
+    builder: &RuntimeShaderBuilder,
+    child_shader_name: impl AsRef<str>,
+    input: impl Into<Option<ImageFilter>>,
+) -> Option<ImageFilter> {
+    let child_shader_name = child_shader_name.as_ref();
+    unsafe {
+        ImageFilter::from_ptr(sb::C_SkImageFilters_RuntimeShader(
+            builder.native() as *const _,
+            child_shader_name.as_ptr() as *const _,
+            child_shader_name.len(),
+            input.into().into_ptr_or_null(),
+        ))
+    }
+}
 
 pub use skia_bindings::SkImageFilters_Dither as Dither;
+
+use super::runtime_effect::RuntimeShaderBuilder;
 variant_name!(Dither::Yes);
 
 /// Create a filter that fills the output with the per-pixel evaluation of the [`Shader`]. The
@@ -1155,5 +1176,17 @@ mod tests {
         #[allow(clippy::needless_borrow)]
         let cr_by_ref = cr(rect);
         assert_eq!(cr_by_ref, CropRect(Some(rect)));
+    }
+
+    #[test]
+    fn test_drop_shadow_only() {
+        let rect = Rect {
+            left: 1.0,
+            top: 2.0,
+            right: 3.0,
+            bottom: 4.0,
+        };
+
+        let _ = super::drop_shadow_only((10., 10.), (1.0, 1.0), 0x404040, None, None, rect);
     }
 }

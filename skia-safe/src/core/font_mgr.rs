@@ -70,8 +70,7 @@ impl FontStyleSet {
         })
     }
 
-    pub fn match_style(&mut self, index: usize, pattern: FontStyle) -> Option<Typeface> {
-        assert!(index < self.count());
+    pub fn match_style(&mut self, pattern: FontStyle) -> Option<Typeface> {
         Typeface::from_ptr(unsafe {
             sb::C_SkFontStyleSet_matchStyle(self.native_mut(), pattern.native())
         })
@@ -130,7 +129,7 @@ impl FontMgr {
         family_name.as_str().into()
     }
 
-    pub fn family_names(&self) -> impl Iterator<Item = String> + Captures<&Self> {
+    pub fn family_names(&self) -> impl Iterator<Item = String> + use<'_> {
         (0..self.count_families()).map(move |i| self.family_name(i))
     }
 
@@ -243,7 +242,10 @@ impl FontMgr {
         Typeface::from_ptr(unsafe {
             sb::C_SkFontMgr_legacyMakeTypeface(
                 self.native(),
-                family_name.map(|n| n.as_ptr()).unwrap_or(ptr::null()),
+                family_name
+                    .as_ref()
+                    .map(|n| n.as_ptr())
+                    .unwrap_or(ptr::null()),
                 style.into_native(),
             )
         })

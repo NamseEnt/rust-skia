@@ -46,6 +46,11 @@ impl PlatformDetails for Msvc {
             }
         }
 
+        // Disable `[[clang::trivial_abi]]` because it leads to ABI mismatches if the
+        // bindings are compiled with a compiler other than clang (e.g. MSVC).
+        // (see <https://groups.google.com/g/skia-discuss/c/3rpeWuPcD9Y/m/CySLakaTAAAJ>)
+        builder.arg("is_trivial_abi", no());
+
         // Code on MSVC needs to be compiled differently (e.g. with /MT or /MD)
         // depending on the runtime being linked. (See
         // <https://doc.rust-lang.org/reference/linkage.html#static-and-dynamic-c-runtimes>)
@@ -61,6 +66,9 @@ impl PlatformDetails for Msvc {
         };
 
         builder.cflag(runtime_library);
+
+        // <https://github.com/llvm/llvm-project/issues/95133>
+        builder.cflag("-D__RTMINTRIN_H");
     }
 
     fn link_libraries(&self, features: &Features) -> Vec<String> {

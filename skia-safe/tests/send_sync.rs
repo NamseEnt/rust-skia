@@ -7,7 +7,7 @@ fn sendable() {
     let mode = BlendMode::ColorBurn;
     let cf = color_filters::blend(color, mode).unwrap();
     let sendable = cf.wrap_send().ok().unwrap();
-    let _unwrapped = sendable.unwrap();
+    let _unwrapped = sendable.into_inner();
 }
 
 /// Test if Sendable<> is actually sendable for RCHandle types.
@@ -32,9 +32,11 @@ mod codec {
 }
 
 mod core {
+    use contour_measure::{ForwardVerbIterator, VerbMeasure};
     use skia_safe::*;
     use static_assertions::*;
 
+    assert_impl_all!(Arc: Send, Sync);
     // SkBitmap is not thread safe. Each thread must have its own copy of SkBitmap fields,
     // although threads may share the underlying pixel array.
     assert_not_impl_any!(Bitmap: Send, Sync);
@@ -45,10 +47,16 @@ mod core {
     assert_not_impl_any!(OwnedCanvas: Send, Sync);
     assert_impl_all!(Color: Send, Sync);
     assert_impl_all!(ColorFilter: Send, Sync);
+    assert_impl_all!(ColorSpacePrimaries: Send, Sync);
+    assert_impl_all!(named_primaries::CicpId: Send, Sync);
+    assert_impl_all!(ColorSpaceTransferFn: Send, Sync);
+    assert_impl_all!(named_transfer_fn::CicpId: Send, Sync);
     assert_impl_all!(ColorSpace: Send, Sync);
     assert_impl_all!(ColorTable: Send, Sync);
     assert_impl_all!(ContourMeasure: Send, Sync);
     assert_impl_all!(ContourMeasureIter: Send, Sync);
+    assert_impl_all!(ForwardVerbIterator: Send, Sync);
+    assert_impl_all!(VerbMeasure: Send, Sync);
     assert_impl_all!(CubicMap: Send, Sync);
     assert_impl_all!(CubicResampler: Send, Sync);
     assert_impl_all!(Data: Send, Sync);
@@ -82,7 +90,6 @@ mod core {
     assert_not_impl_any!(path::Iter: Send, Sync);
     assert_impl_all!(Path: Send, Sync);
     assert_impl_all!(PathBuilder: Send, Sync);
-    assert_impl_all!(path_effect::DashInfo: Send, Sync);
     assert_impl_all!(PathEffect: Send, Sync);
     assert_not_impl_any!(PathMeasure: Send, Sync);
     assert_impl_all!(Picture: Send, Sync);
@@ -154,6 +161,7 @@ mod effects {
 
 #[cfg(feature = "gpu")]
 mod gpu {
+    use ganesh::MarkFrameBoundary;
     use skia_safe::gpu::*;
     use static_assertions::*;
     assert_impl_all!(BackendFormat: Send, Sync);
@@ -170,16 +178,28 @@ mod gpu {
     // gpu/yuva_backend_textures.rs
     assert_impl_all!(YUVABackendTextureInfo: Send, Sync);
     assert_impl_all!(YUVABackendTextures: Send, Sync);
+
     assert_impl_all!(MutableTextureState: Send, Sync);
     assert_impl_all!(BackendApi: Send, Sync);
 
     // gpu/types.rs
     assert_impl_all!(BackendAPI: Send, Sync);
+    assert_impl_all!(Budgeted: Send, Sync);
+    assert_impl_all!(Mipmapped: Send, Sync);
+    assert_impl_all!(Protected: Send, Sync);
+    assert_impl_all!(Renderable: Send, Sync);
+    assert_impl_all!(Origin: Send, Sync);
+    assert_impl_all!(GpuStatsFlags: Send, Sync);
+    assert_impl_all!(GpuStats: Send, Sync);
+
+    // gpu/ganesh/types.rs
     assert_impl_all!(SurfaceOrigin: Send, Sync);
     assert_not_impl_any!(FlushInfo: Send, Sync);
     assert_impl_all!(SemaphoresSubmitted: Send, Sync);
     assert_impl_all!(PurgeResourceOptions: Send, Sync);
     assert_impl_all!(SyncCpu: Send, Sync);
+    assert_impl_all!(MarkFrameBoundary: Send, Sync);
+    assert_impl_all!(SubmitInfo: Send, Sync);
 
     #[cfg(feature = "gl")]
     mod gl {
@@ -205,7 +225,6 @@ mod gpu {
     #[cfg(feature = "vulkan")]
     mod vulkan {
         use skia_safe::gpu::vk::*;
-        use skia_safe::gpu::BackendDrawableInfo;
         use static_assertions::*;
         // TODO: BackendContext is referencing get_proc and is used only temporarily for building
         //       the context.
@@ -298,7 +317,7 @@ mod render_svg {
     use skia_safe::svg::*;
     use static_assertions::*;
 
-    assert_impl_all!(Dom: Send, Sync);
+    assert_not_impl_any!(Dom: Send, Sync);
     assert_impl_all!(LoadError: Send, Sync);
 }
 

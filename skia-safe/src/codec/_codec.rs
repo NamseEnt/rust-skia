@@ -39,6 +39,8 @@ pub struct Options {
     pub prior_frame: Option<usize>,
 }
 
+pub const NO_FRAME: i32 = sb::SkCodec_kNoFrame;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct FrameInfo {
@@ -62,6 +64,9 @@ impl Default for FrameInfo {
 
 pub use sb::SkCodec_SkScanlineOrder as ScanlineOrder;
 variant_name!(ScanlineOrder::BottomUp);
+
+pub use sb::SkCodec_IsAnimated as IsAnimated;
+variant_name!(IsAnimated::Yes);
 
 pub struct Codec<'a> {
     inner: RefHandle<SkCodec>,
@@ -149,6 +154,10 @@ impl Codec<'_> {
     }
 
     // TODO: getICCProfile
+
+    pub fn has_high_bit_depth_encoded_data(&self) -> bool {
+        unsafe { sb::C_SkCodec_hasHighBitDepthEncodedData(self.native()) }
+    }
 
     pub fn origin(&self) -> EncodedOrigin {
         EncodedOrigin::from_native_c(unsafe { sb::C_SkCodec_getOrigin(self.native()) })
@@ -374,6 +383,10 @@ impl Codec<'_> {
         } else {
             None
         }
+    }
+
+    pub fn is_animated(&mut self) -> IsAnimated {
+        unsafe { sb::C_SkCodec_isAnimated(self.native_mut()) }
     }
 
     // TODO: Register

@@ -24,6 +24,7 @@
 
 // core/
 #include "include/core/SkAnnotation.h"
+#include "include/core/SkArc.h"
 #include "include/core/SkBlendMode.h"
 #include "include/core/SkBitmap.h"
 #include "include/core/SkBlurTypes.h"
@@ -77,6 +78,8 @@
 #include "include/core/SkVertices.h"
 // docs/
 #include "include/docs/SkPDFDocument.h"
+#include "include/docs/SkPDFJpegHelpers.h"
+
 // effects/
 #include "include/effects/Sk1DPathEffect.h"
 #include "include/effects/Sk2DPathEffect.h"
@@ -160,6 +163,10 @@ extern "C" SkISize C_SkCodec_getScaledDimensions(const SkCodec* self, float desi
     return self->getScaledDimensions(desiredScale);
 }
 
+extern "C" bool C_SkCodec_hasHighBitDepthEncodedData(const SkCodec* self) {
+    return self->hasHighBitDepthEncodedData();
+}
+
 extern "C" bool C_SkCodec_getValidSubset(const SkCodec* self, SkIRect* desiredSubset) {
     return self->getValidSubset(desiredSubset);
 }
@@ -202,6 +209,10 @@ extern "C" bool C_SkCodec_getFrameInfo(SkCodec* self, int index, SkCodec::FrameI
 
 extern "C" int C_SkCodec_getRepetitionCount(SkCodec* self) {
     return self->getRepetitionCount();
+}
+
+extern "C" SkCodec::IsAnimated C_SkCodec_isAnimated(SkCodec* self) {
+    return self->isAnimated();
 }
 
 // SkCodecs
@@ -288,7 +299,7 @@ extern "C" void C_SkPixmapUtils_SwapWidthHeight(SkImageInfo* uninitialized, cons
 //
 
 extern "C" void C_Core_Types(
-    SkGraphics *, SkCoverageMode *, SkColorChannelFlag *, SkSurfaces::BackendSurfaceAccess) {};
+    SkArc *, SkGraphics *, SkCoverageMode *, SkColorChannelFlag *, SkSurfaces::BackendSurfaceAccess) {};
 
 //
 // core/SkBlender.h
@@ -357,6 +368,10 @@ extern "C" SkImage* C_SkSurface_makeImageSnapshot(SkSurface* self, const SkIRect
     } else {
         return self->makeImageSnapshot().release();
     }
+}
+
+extern "C" SkImage* C_SkSurface_makeTemporaryImage(SkSurface* self) {
+    return self->makeTemporaryImage().release();
 }
 
 extern "C" SkSurface* C_SkSurface_makeSurface(
@@ -448,6 +463,10 @@ extern "C" size_t C_SkImage_textureSize(const SkImage* self) {
 
 extern "C" bool C_SkImage_isValid(const SkImage* self, GrRecordingContext* context) {
     return self->isValid(context);
+}
+
+extern "C" SkImage* C_SkImage_makeScaled(const SkImage* self, const SkImageInfo* info, const SkSamplingOptions* sampling) {
+    return self->makeScaled(*info, *sampling).release();
 }
 
 extern "C" SkData* C_SkImage_refEncodedData(const SkImage* self) {
@@ -970,6 +989,12 @@ extern "C" SkColorSpace* C_SkColorSpace_MakeSRGBLinear() {
     return SkColorSpace::MakeSRGBLinear().release();
 }
 
+extern "C" SkColorSpace* C_SkColorSpace_MakeCICP(
+    SkNamedPrimaries::CicpId colorPrimaries,
+    SkNamedTransferFn::CicpId transferCharacteristics) {
+    return SkColorSpace::MakeCICP(colorPrimaries, transferCharacteristics).release();
+}
+
 extern "C" SkColorSpace* C_SkColorSpace_makeLinearGamma(const SkColorSpace* self) {
     return self->makeLinearGamma().release();
 }
@@ -988,6 +1013,14 @@ extern "C" SkData* C_SkColorSpace_serialize(const SkColorSpace* self) {
 
 extern "C" SkColorSpace* C_SkColorSpace_Deserialize(const void* data, size_t length) {
     return SkColorSpace::Deserialize(data, length).release();
+}
+
+extern "C" uint32_t C_SkColorSpace_transferFnHash(const SkColorSpace* self) {
+    return self->transferFnHash();
+}
+
+extern "C" uint64_t C_SkColorSpace_hash(const SkColorSpace* self) {
+    return self->hash();
 }
 
 //
@@ -1338,12 +1371,8 @@ extern "C" SkTextBlob* C_SkTextBlobBuilder_make(SkTextBlobBuilder* self) {
 // core/SkTypeface.h
 //
 
-extern "C" bool C_SkTypeface_isBold(const SkTypeface* self) {
-    return self->isBold();
-}
-
-extern "C" bool C_SkTypeface_isItalic(const SkTypeface* self) {
-    return self->isItalic();
+extern "C" void C_SkTypeface_fontStyle(const SkTypeface* self, SkFontStyle* uninitialized) {
+    new (uninitialized) SkFontStyle(self->fontStyle());
 }
 
 extern "C" SkTypeface* C_SkTypeface_makeClone(const SkTypeface* self, const SkFontArguments* arguments) {
@@ -1749,6 +1778,10 @@ extern "C" void C_SkRect_roundIn(const SkRect* self, SkIRect* dst) {
     self->roundIn(dst);
 }
 
+extern "C" void C_SkRect_dumpToString(const SkRect* self, bool asHex, SkString* str) {
+    *str = self->dumpToString(asHex);
+}
+
 extern "C" void C_SkRect_roundOut(const SkRect* self, SkIRect* dst) {
     self->roundOut(dst);
 }
@@ -1810,12 +1843,12 @@ extern "C" SkColorFilter* C_SkColorFilters_Blend(const SkColor c, SkBlendMode bl
 }
 
 
-extern "C" SkColorFilter* C_SkColorFilters_Matrix(const SkColorMatrix* colorMatrix) {
-    return SkColorFilters::Matrix(*colorMatrix).release();
+extern "C" SkColorFilter* C_SkColorFilters_Matrix(const SkColorMatrix* colorMatrix, SkColorFilters::Clamp clamp) {
+    return SkColorFilters::Matrix(*colorMatrix, clamp).release();
 }
 
-extern "C" SkColorFilter* C_SkColorFilters_MatrixRowMajor(const SkScalar array[20]) {
-    return SkColorFilters::Matrix(array).release();
+extern "C" SkColorFilter* C_SkColorFilters_MatrixRowMajor(const SkScalar array[20], SkColorFilters::Clamp clamp) {
+    return SkColorFilters::Matrix(array, clamp).release();
 }
 
 extern "C" SkColorFilter* C_SkColorFilters_HSLAMatrixOfColorMatrix(const SkColorMatrix& colorMatrix) {
@@ -1872,6 +1905,26 @@ extern "C" SkScalar C_SkContourMeasure_length(const SkContourMeasure* self) {
 
 extern "C" bool C_SkContourMeasure_isClosed(const SkContourMeasure* self) {
     return self->isClosed();
+}
+
+extern "C" void C_SkContourMeasure_begin(const SkContourMeasure* self, SkContourMeasure::ForwardVerbIterator* uninitialized) {
+    new (uninitialized) SkContourMeasure::ForwardVerbIterator(self->begin());
+}
+
+extern "C" void C_SkContourMeasure_end(const SkContourMeasure* self, SkContourMeasure::ForwardVerbIterator* uninitialized) {
+    new (uninitialized) SkContourMeasure::ForwardVerbIterator(self->end());
+}
+
+extern "C" bool C_SkContourMeasure_ForwardVerbIterator_Equals(const SkContourMeasure::ForwardVerbIterator* a, const SkContourMeasure::ForwardVerbIterator* b) {
+    return *const_cast<SkContourMeasure::ForwardVerbIterator*>(a) == *b;
+}
+
+extern "C" void C_SkContourMeasure_ForwardVerbIterator_item(const SkContourMeasure::ForwardVerbIterator* self, SkContourMeasure::VerbMeasure* uninitialized) {
+    new (uninitialized) SkContourMeasure::VerbMeasure(**self);
+}
+
+extern "C" void C_SkContourMeasure_ForwardVerbIterator_next(SkContourMeasure::ForwardVerbIterator* self) {
+    ++*self;
 }
 
 //
@@ -1995,6 +2048,10 @@ extern "C" void C_SkString_destruct(SkString* self) {
     self->~SkString();
 }
 
+extern "C" void C_SkString_CopyConstruct(SkString* uninitialized, const SkString* str) {
+    new (uninitialized) SkString(*str);
+}
+
 extern "C" const char* C_SkString_c_str_size(const SkString* self, size_t* size) {
     *size = self->size();
     return self->c_str();
@@ -2065,10 +2122,6 @@ extern "C" SkPathEffect* C_SkPathEffect_MakeSum(SkPathEffect* first, SkPathEffec
 
 extern "C" SkPathEffect* C_SkPathEffect_MakeCompose(SkPathEffect* outer, SkPathEffect* inner) {
     return SkPathEffect::MakeCompose(sp(outer), sp(inner)).release();
-}
-
-extern "C" void C_SkPathEffect_DashInfo_Construct(SkPathEffect::DashInfo* uninitialized) {
-    new(uninitialized) SkPathEffect::DashInfo();
 }
 
 extern "C" SkPathEffect* C_SkPathEffect_Deserialize(const void* data, size_t length) {
@@ -2546,6 +2599,12 @@ extern "C" SkColorFilter* C_SkOverdrawColorFilter_MakeWithSkColors(const SkColor
 
 extern "C" {
 
+void C_SkRuntimeEffect_Options_Construct(SkRuntimeEffect::Options* uninitialized, bool forceUnoptimized, const char* name, size_t length) {
+    new (uninitialized) SkRuntimeEffect::Options();
+    uninitialized->forceUnoptimized = forceUnoptimized;
+    uninitialized->fName = std::string_view(name, length);
+}
+
 SkRuntimeEffect *C_SkRuntimeEffect_MakeForColorFilter(
     const SkString *sksl,
     const SkRuntimeEffect::Options *options,
@@ -2639,6 +2698,92 @@ bool C_SkRuntimeEffect_allowBlender(const SkRuntimeEffect* self) {
     return self->allowBlender();
 }
 
+void C_SkRuntimeShaderBuilder_Construct(SkRuntimeShaderBuilder *uninitialized,
+                                        SkRuntimeEffect *effect) {
+  new (uninitialized) SkRuntimeShaderBuilder(sp(effect));
+}
+
+void C_SkRuntimeShaderBuilder_destruct(SkRuntimeShaderBuilder *self) {
+  self->~SkRuntimeShaderBuilder();
+}
+
+SkShader *
+C_SkRuntimeShaderBuilder_makeShader(const SkRuntimeShaderBuilder *self,
+                                    const SkMatrix *localMatrix) {
+  auto shader = self->makeShader(localMatrix);
+  return shader.release();
+}
+
+enum class ShaderBuilderUniformResult {
+  Ok,
+  Error
+};
+
+ShaderBuilderUniformResult C_SkRuntimeShaderBuilder_setUniformFloat(SkRuntimeShaderBuilder *self,
+                                              const char *name, size_t count,
+                                              const float *const values,
+                                              size_t len) {
+  using float2 = std::array<float, 2>;
+  using float3 = std::array<float, 3>;
+  using float4 = std::array<float, 4>;
+  using float3x3 = std::array<float, 9>;
+  using float4x4 = std::array<float, 16>;
+
+  switch (len) {
+  case 1:
+    self->uniform(std::string_view(name, count)) = *values;
+    return ShaderBuilderUniformResult::Ok;
+  case 2:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const float2 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  case 3:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const float3 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  case 4:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const float4 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  case 9:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const float3x3 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  case 16:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const float4x4 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  }
+
+  return ShaderBuilderUniformResult::Error;
+}
+
+ShaderBuilderUniformResult C_SkRuntimeShaderBuilder_setUniformInt(SkRuntimeShaderBuilder *self,
+                                            const char *name, size_t count,
+                                            const int *const values,
+                                            size_t len) {
+  using int2 = std::array<int, 2>;
+  using int3 = std::array<int, 3>;
+  using int4 = std::array<int, 4>;
+  switch (len) {
+  case 1:
+    self->uniform(std::string_view(name, count)) = *values;
+    return ShaderBuilderUniformResult::Ok;
+  case 2:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const int2 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  case 3:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const int3 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  case 4:
+    self->uniform(std::string_view(name, count)) =
+        *reinterpret_cast<const int4 *>(values);
+    return ShaderBuilderUniformResult::Ok;
+  }
+  return ShaderBuilderUniformResult::Error;
+}
 }
 
 //
@@ -2710,16 +2855,16 @@ SkImageFilter *C_SkImageFilters_DisplacementMap(SkColorChannel xChannelSelector,
 
 SkImageFilter *C_SkImageFilters_DropShadow(SkScalar dx, SkScalar dy,
                                            SkScalar sigmaX, SkScalar sigmaY,
-                                           SkColor color, SkImageFilter *input,
+                                           const SkColor4f* color, SkColorSpace *colorSpace, SkImageFilter *input,
                                            const SkRect *cropRect) {
-    return SkImageFilters::DropShadow(dx, dy, sigmaX, sigmaY, color, sp(input), cropRect).release();
+    return SkImageFilters::DropShadow(dx, dy, sigmaX, sigmaY, *color, sp(colorSpace), sp(input), cropRect).release();
 }
 
 SkImageFilter *C_SkImageFilters_DropShadowOnly(SkScalar dx, SkScalar dy,
                                                SkScalar sigmaX, SkScalar sigmaY,
-                                               SkColor color, SkImageFilter *input,
+                                               const SkColor4f* color, SkColorSpace* colorSpace, SkImageFilter *input,
                                                const SkRect *cropRect) {
-    return SkImageFilters::DropShadowOnly(dx, dy, sigmaX, sigmaY, color, sp(input), cropRect).release();
+    return SkImageFilters::DropShadowOnly(dx, dy, sigmaX, sigmaY, *color, sp(colorSpace), sp(input), cropRect).release();
 }
 
 SkImageFilter* C_SkImageFilters_Empty() {
@@ -2856,6 +3001,14 @@ C_SkImageFilters_SpotLitSpecular(const SkPoint3 &location,
                                            cropRect).release();
 }
 
+SkImageFilter *C_SkImageFilters_RuntimeShader(
+    const SkRuntimeShaderBuilder &builder, const char *childShaderName,
+    size_t childShaderNameCount, SkImageFilter *input) {
+  auto imageFilter = SkImageFilters::RuntimeShader(
+      builder, std::string_view(childShaderName, childShaderNameCount),
+      sp(input));
+  return imageFilter.release();
+}
 }
 
 //
@@ -2890,12 +3043,18 @@ bool C_SkJpegEncoder_Encode(SkWStream* stream, const SkPixmap* pixmap,
     int quality,
     SkJpegEncoder::Downsample downsample, 
     SkJpegEncoder::AlphaOption alphaOption, 
-    const SkData* xmpMetadata) {
+    const SkData* xmpMetadata, 
+    const SkEncodedOrigin* origin) {
+
     auto options = SkJpegEncoder::Options();
     options.fQuality = quality;
     options.fDownsample = downsample;
     options.fAlphaOption = alphaOption;
     options.xmpMetadata = xmpMetadata;
+    if (origin) {
+        options.fOrigin = *origin;
+    }
+
     return SkJpegEncoder::Encode(stream, *pixmap, options);
 }
 
@@ -2903,12 +3062,18 @@ SkData* C_SkJpegEncoder_EncodeImage(GrDirectContext* ctx, const SkImage* img,
     int quality,
     SkJpegEncoder::Downsample downsample, 
     SkJpegEncoder::AlphaOption alphaOption, 
-    const SkData* xmpMetadata) {
+    const SkData* xmpMetadata,
+    const SkEncodedOrigin* origin) {
+
     auto options = SkJpegEncoder::Options();
     options.fQuality = quality;
     options.fDownsample = downsample;
     options.fAlphaOption = alphaOption;
     options.xmpMetadata = xmpMetadata;
+    if (origin) {
+        options.fOrigin = *origin;
+    }
+
     return SkJpegEncoder::Encode(ctx, img, options).release();
 }
 
@@ -2952,7 +3117,7 @@ extern "C" void C_SkPDF_StructElementNode_appendChild(SkPDF::StructureElementNod
     self->fChildVector.push_back(std::unique_ptr<SkPDF::StructureElementNode>(node));
 }
 
-extern "C" size_t C_SkPDF_StructureElementNode_getChildVector(const SkPDF::StructureElementNode *self, SkPDF::StructureElementNode **nodes)
+extern "C" size_t C_SkPDF_StructureElementNode_getChildVector(const SkPDF::StructureElementNode *self, const SkPDF::StructureElementNode ** nodes)
 {
     if (self->fChildVector.empty())
     {
@@ -2961,7 +3126,11 @@ extern "C" size_t C_SkPDF_StructureElementNode_getChildVector(const SkPDF::Struc
     }
     else
     {
-        *nodes = &*self->fChildVector.front();
+        using ElementType = decltype(self->fChildVector)::value_type;
+        static_assert(sizeof(ElementType) == sizeof(SkPDF::StructureElementNode*), "Size mismatch");
+        static_assert(alignof(ElementType) == alignof(SkPDF::StructureElementNode*), "Alignment mismatch");
+
+        *nodes = reinterpret_cast<SkPDF::StructureElementNode const *>(self->fChildVector.data());
         return self->fChildVector.size();
     }
 }
@@ -2975,7 +3144,15 @@ extern "C" void C_SkPDF_Metadata_destruct(SkPDF::Metadata* self) {
 }
 
 extern "C" SkDocument* C_SkPDF_MakeDocument(SkWStream* stream, const SkPDF::Metadata* metadata) {
-    return SkPDF::MakeDocument(stream, *metadata).release();
+    // We want to support JPeg encoding / decoding by default.
+    SkPDF::Metadata meta = *metadata;
+    meta.jpegDecoder = SkPDF::JPEG::Decode;
+    meta.jpegEncoder = SkPDF::JPEG::Encode;
+    return SkPDF::MakeDocument(stream, meta).release();
+}
+
+extern "C" void C_SkPDF_SetNodeId(SkCanvas* dst, int nodeID) {
+    return SkPDF::SetNodeId(dst, nodeID);
 }
 
 //

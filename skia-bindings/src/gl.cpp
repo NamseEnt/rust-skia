@@ -6,14 +6,14 @@
     #define SK_GL
 #endif
 
-#include "include/gpu/GrBackendSurface.h"
-#include "include/gpu/GrDirectContext.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
+#include "include/gpu/ganesh/GrDirectContext.h"
 #include "include/gpu/ganesh/gl/GrGLBackendSurface.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
 #include "include/gpu/ganesh/gl/GrGLMakeWebGLInterface.h"
-#include "include/gpu/gl/GrGLExtensions.h"
-#include "include/gpu/gl/GrGLInterface.h"
-#include "include/gpu/gl/GrGLAssembleInterface.h"
+#include "include/gpu/ganesh/gl/GrGLExtensions.h"
+#include "include/gpu/ganesh/gl/GrGLInterface.h"
+#include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
 #include "src/gpu/ganesh/gl/GrGLDefines.h"
 
 // Additional types not yet referenced.
@@ -208,6 +208,36 @@ extern "C" bool C_GrBackendRenderTargets_GetGLFramebufferInfo(const GrBackendRen
 
 extern "C" const GrGLInterface* C_GrGLInterfaces_MakeWebGL() {
     return GrGLInterfaces::MakeWebGL().release();
+}
+
+#endif
+
+#if defined(SK_BUILD_FOR_IOS)
+
+#include "include/gpu/ganesh/gl/ios/GrGLMakeIOSInterface.h"
+
+extern "C" const GrGLInterface* C_GrGLInterfaces_MakeIOS() {
+    return GrGLInterfaces::MakeIOS().release();
+}
+
+#endif
+
+#if defined(SK_BUILD_FOR_MAC)
+
+#include "include/gpu/ganesh/gl/mac/GrGLMakeMacInterface.h"
+
+extern "C" const GrGLInterface* C_GrGLInterfaces_MakeMac() {
+    return GrGLInterfaces::MakeMac().release();
+}
+
+#endif
+
+#if defined(SK_BUILD_FOR_WIN)
+
+#include "include/gpu/ganesh/gl/win/GrGLMakeWinInterface.h"
+
+extern "C" const GrGLInterface* C_GrGLInterfaces_MakeWin() {
+    return GrGLInterfaces::MakeWin().release();
 }
 
 #endif

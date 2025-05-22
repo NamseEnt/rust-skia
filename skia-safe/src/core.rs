@@ -5,6 +5,7 @@
 
 mod alpha_type;
 mod annotation;
+pub mod arc;
 mod bbh_factory;
 mod bitmap;
 mod blend_mode;
@@ -30,8 +31,10 @@ pub mod font_arguments;
 pub mod font_metrics;
 mod font_mgr;
 pub mod font_parameters;
+mod font_scanner;
 pub mod font_style;
 mod font_types;
+mod four_byte_tag;
 pub mod graphics;
 pub mod image;
 pub mod image_filter;
@@ -109,6 +112,7 @@ pub use font_metrics::FontMetrics;
 pub use font_mgr::*;
 pub use font_style::FontStyle;
 pub use font_types::*;
+pub use four_byte_tag::*;
 pub use image::{images, Image};
 pub use image_filter::ImageFilter;
 pub use image_generator::*;
@@ -120,6 +124,7 @@ pub use milestone::*;
 pub use paint::Paint;
 pub use tile_mode::*;
 // We keep these around for the time being.
+pub use arc::Arc;
 pub use paint::Cap as PaintCap;
 pub use paint::Join as PaintJoin;
 pub use paint::Style as PaintStyle;

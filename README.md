@@ -2,10 +2,10 @@
 
 [![crates.io](https://img.shields.io/crates/v/skia-safe)](https://crates.io/crates/skia-safe) [![license](https://img.shields.io/crates/l/skia-safe)](LICENSE) [![Windows QA](https://github.com/rust-skia/rust-skia/actions/workflows/windows-qa.yaml/badge.svg?branch=master)](https://github.com/rust-skia/rust-skia/actions/workflows/windows-qa.yaml) [![Linux QA](https://github.com/rust-skia/rust-skia/actions/workflows/linux-qa.yaml/badge.svg?branch=master)](https://github.com/rust-skia/rust-skia/actions/workflows/linux-qa.yaml) [![macOS QA](https://github.com/rust-skia/rust-skia/actions/workflows/macos-qa.yaml/badge.svg?branch=master)](https://github.com/rust-skia/rust-skia/actions/workflows/macos-qa.yaml)
 
-Skia Submodule Status: chrome/m125 ([upstream changes][skia-upstream], [our changes][skia-ours]).
+Skia Submodule Status: chrome/m135 ([upstream changes][skia-upstream], [our changes][skia-ours]).
 
-[skia-upstream]: https://github.com/rust-skia/skia/compare/m125-0.73.0...google:chrome/m125
-[skia-ours]: https://github.com/google/skia/compare/chrome/m125...rust-skia:m125-0.73.0
+[skia-upstream]: https://github.com/rust-skia/skia/compare/m135-0.83.1...google:chrome/m135
+[skia-ours]: https://github.com/google/skia/compare/chrome/m135...rust-skia:m135-0.83.1
 
 ## About
 
@@ -58,7 +58,7 @@ The supported wrappers, Skia codecs, and additional Skia features are documented
 
 If the target platform or feature configuration is not available as a prebuilt binary, skia-bindings' `build.rs` will try to build Skia and generate the Rust bindings.
 
-To prepare for that, **LLVM** and **Python 3** are needed:
+For building Skia from source, **LLVM**, **Python 3**, and **Ninja** are required:
 
 **LLVM**
 
@@ -67,6 +67,10 @@ We recommend the version that comes preinstalled with your platform, or, if not 
 **Python 3**
 
 The build script probes for `python --version` and `python3 --version` and uses the first one that looks like a version 3 executable for building Skia.
+
+**Ninja**
+
+The build system for Skia. `ninja` is available as a binary package on all major platforms. Install `ninja` or `ninja-build` and make sure it is available `PATH` with `ninja --version`.
 
 ### On macOS
 
@@ -77,14 +81,6 @@ The build script probes for `python --version` and `python3 --version` and uses 
   ```
 
   or download and install the [Command Line Tools for Xcode](https://developer.apple.com/download/more/).
-
-- **macOS Mojave only**: install the SDK headers:
-
-  ```bash
-  sudo open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
-  ```
-
-  If not installed, the Skia build _may_ fail to build `SkJpegUtility.cpp` and the binding generation _will_ fail with `'TargetConditionals.h' file not found` . Also note that the Command Line Tools _and_ SDK headers _should_ be reinstalled after an update of XCode.
 
 - As an alternative to Apple's XCode LLVM, install LLVM via `brew install llvm` or `brew install llvm` and then set `PATH`, `CPPFLAGS`, and `LDFLAGS` like instructed.
 
@@ -115,38 +111,12 @@ The build script probes for `python --version` and `python3 --version` and uses 
 
 ### On Linux
 
-#### Ubuntu 16+
+#### Ubuntu 20+
 
 - LLVM/Clang should be available already, if not, [install the latest version](http://releases.llvm.org/download.html).
 - If OpenGL libraries are missing, install the drivers for you graphics card, or a mesa package like `libgl1-mesa-dev`.
 - For **X11**, build with feature `x11`.
 - For **Wayland**, install `libwayland-dev` and build with the `wayland` feature.
-
-#### CentOS 7
-
-- Install the following packages:
-
-  ```bash
-  sudo yum install gcc openssl-devel libX11-devel python3 fontconfig-devel mesa-libGL-devel
-  ```
-
-- [Install and enable the LLVM toolset 7](https://www.softwarecollections.org/en/scls/rhscl/llvm-toolset-7.0/)
-
-- [Install and enable the Developer Toolset 8](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-8/)
-
-#### CentOS 8
-
-- Install the following packages:
-
-  ```bash
-  sudo yum install gcc openssl-devel libX11-devel python3 clang fontconfig-devel mesa-libGL-devel
-  ```
-
-- Set `/usr/bin/python3` as the default `python` command:
-
-  ```bash
-  sudo alternatives --set python /usr/bin/python3
-  ```
 
 ### For Android
 
@@ -271,6 +241,30 @@ Please share your build experience so that we can try to automate the build and 
 
 ## Example Applications
 
+### gl-window
+
+An example that opens an OpenGL Window and draws the rust-skia icon with skia-safe (contributed by [@nornagon](https://github.com/nornagon)).
+
+```bash
+cargo run --example gl-window --features gl
+```
+
+On Linux the feature `x11` needs to be enabled:
+
+```bash
+cargo run --example gl-window --features gl,x11
+```
+
+### vulkan-window
+
+An example application that opens a Window and renders a blue rectangle using [Vulkano](https://github.com/vulkano-rs/vulkano) (contributed by [@samizdatco](https://github.com/samizdatco) in [#1066](https://github.com/rust-skia/rust-skia/pull/1066))
+
+```bash
+cargo run --example vulkan-window --features "vulkan,vulkan-window"
+```
+
+To add Vulkan support to your system, the easiest way is to install the [LunarG SDK](https://vulkan.lunarg.com/sdk/home), and enable "System Global Installation" in the installer.
+
 ### icon
 
 The `icon` example generates the rust-skia icon in the current directory.
@@ -305,20 +299,6 @@ And to show the drivers that are supported
 cargo run -- --help
 ```
 
-### gl-window
-
-An example that opens an OpenGL Window and draws the rust-skia icon with skia-safe (contributed by [@nornagon](https://github.com/nornagon)).
-
-```bash
-cargo run --example gl-window --features gl
-```
-
-On Linux the feature `x11` needs to be enabled:
-
-```bash
-cargo run --example gl-window --features gl,x11
-```
-
 ## Example Images
 
 Fill, Radial Gradients, Stroke, Stroke with Gradient, Transparency:
@@ -350,7 +330,8 @@ More details can be found at [CONTRIBUTING.md](https://github.com/rust-skia/rust
 - Alberto González Palomo ([@AlbertoGP](https://github.com/AlbertoGP)) designed the Rust-Skia Logo and the example program that renders it.
 - Luper Rouch ([@flupke](https://github.com/flupke), sponsored by [Jitter](https://jitter.video/))
   added build support for the `wasm32-unknown-emscripten` target.
-- Osei Fortune ([@triniwiz](https://github.com/triniwiz)) contributed rendering SVG files.
+- Osei Fortune ([@triniwiz](https://github.com/triniwiz)) and Savchenko Ivan ([@Aiving](https://github.com/Aiving))
+  contributed rendering SVG files.
 
 ## Maintainers
 
