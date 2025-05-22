@@ -14,7 +14,7 @@ jobs:
     env:
       SKIA_DEBUG: 0
       MACOSX_DEPLOYMENT_TARGET: '10.14'
-
+      FORCE_SKIA_BUILD: 1
     steps:
     - uses: actions/checkout@v3
       with:
