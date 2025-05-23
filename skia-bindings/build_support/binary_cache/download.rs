@@ -173,7 +173,7 @@ fn should_try_download_binaries(
     config: &binaries_config::BinariesConfiguration,
     force: bool,
 ) -> Option<(String, String)> {
-    const RELEASE_COMMIT: &str = "511269ae96b78519258f";
+    const RELEASE_COMMIT: &str = "b6aa675409f29e35e1e8";
     const VERSION: &str = "0.84.0";
     match cargo::target().as_strs() {
         ("x86_64", "pc", "windows", Some("msvc")) => {
