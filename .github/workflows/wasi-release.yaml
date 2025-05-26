@@ -39,7 +39,7 @@ jobs:
           git checkout 3.1.61
           git sparse-checkout set system/include
           rm system/include/emscripten/version.h
-          sed -i 's/#include "version.h"/\/\/ #include "version.h"/' /private/tmp/emscripten/system/include/emscripten/emscripten.h
+          sed -i 's/#include "version.h"/\/\/ #include "version.h"/' system/include/emscripten/emscripten.h
 
       - name: "Build skia-safe for wasm32-wasip1-threads with features gl,freetype-woff2,embed-freetype"
         shell: bash
