@@ -66,6 +66,7 @@ fn flags() -> Vec<String> {
     [
         "-DSK_BUILD_FOR_UNIX",
         "-D__wasm32__",
+        "-D__EMSCRIPTEN__",
         "-D_WASI_EMULATED_GETPID",
         "-mllvm",
         "-wasm-enable-sjlj",
