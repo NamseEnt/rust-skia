@@ -62,11 +62,10 @@ impl PlatformDetails for Wasm32Wasip1Threads {
 
 fn flags() -> Vec<String> {
     let wasi_sdk_base_dir = wasi_sdk_base_dir();
-    let wasi_emscripten_glue = wasi_emscripten_glue();
+    let opengl_include = opengl_include();
     [
         "-DSK_BUILD_FOR_UNIX",
         "-D__wasm32__",
-        "-D__EMSCRIPTEN__",
         "-D_WASI_EMULATED_GETPID",
         "-mllvm",
         "-wasm-enable-sjlj",
@@ -79,17 +78,17 @@ fn flags() -> Vec<String> {
         "-Xclang -target-feature -Xclang +mutable-globals",
         &format!("--sysroot=/{wasi_sdk_base_dir}/share/wasi-sysroot"),
         &format!("-I/{wasi_sdk_base_dir}/lib/clang/18/include"),
-        &format!("-I{wasi_emscripten_glue}"),
+        &format!("-I{opengl_include}"),
     ]
     .iter()
     .flat_map(|s| s.split_whitespace().map(|s| s.to_string()))
     .collect()
 }
 
-fn wasi_emscripten_glue() -> String {
-    match std::env::var("WASI_EMSCRIPTEN_GLUE") {
+fn opengl_include() -> String {
+    match std::env::var("OPENGL_INCLUDE") {
         Ok(val) => val,
-        Err(_e) => panic!("please set the WASI_EMSCRIPTEN_GLUE environment variable"),
+        Err(_e) => panic!("please set the OPENGL_INCLUDE environment variable"),
     }
 }
 
