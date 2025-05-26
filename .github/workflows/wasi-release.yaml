@@ -38,9 +38,8 @@ jobs:
           cd /tmp/emscripten
           git checkout 3.1.61
           git sparse-checkout set system/include
-          rm -rf system/include/emscripten*
-          rm -rf system/include/wasi
-          rm -rf system/include/wasm_simd128.h
+          rm system/include/emscripten/version.h
+          sed -i 's/#include "version.h"/\/\/ #include "version.h"/' /private/tmp/emscripten/system/include/emscripten/emscripten.h
 
       - name: "Build skia-safe for wasm32-wasip1-threads with features gl,freetype-woff2,embed-freetype"
         shell: bash
